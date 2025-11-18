@@ -1,0 +1,11 @@
+# Arquivos compilados (não envie isso)
+/out
+/target
+
+# Configurações do IntelliJ (cada dev tem a sua)
+.idea
+*.iml
+
+# Banco de Dados (MUITO IMPORTANTE NÃO ENVIAR)
+*.db
+*.sqlite
