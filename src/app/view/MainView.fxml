@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.ProgressBar?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
@@ -53,11 +54,20 @@
                         <TextField fx:id="txtMarca" promptText="Marca" maxWidth="Infinity" />
                     </VBox>
 
-                    <VBox HBox.hgrow="SOMETIMES">
-                        <Label text="Preço:" style="-fx-font-size: 10px;"/>
-                        <TextField fx:id="txtPreco" promptText="0.00" maxWidth="Infinity" />
+                    <VBox HBox.hgrow="SOMETIMES" prefWidth="80">
+                        <Label text="Custo (R$):" style="-fx-font-size: 10px;"/>
+                        <TextField fx:id="txtPrecoCusto" promptText="0.00" maxWidth="Infinity" />
                     </VBox>
 
+                    <VBox HBox.hgrow="SOMETIMES" prefWidth="70">
+                        <Label text="Margem %:" style="-fx-font-size: 10px;"/>
+                        <TextField fx:id="txtMargem" promptText="Ex: 50" maxWidth="Infinity" />
+                    </VBox>
+
+                    <VBox HBox.hgrow="SOMETIMES" prefWidth="80">
+                        <Label text="Venda (R$):" style="-fx-font-size: 10px; -fx-font-weight: bold;"/>
+                        <TextField fx:id="txtPrecoVenda" promptText="0.00" maxWidth="Infinity" style="-fx-background-color: #e8f8f5;"/>
+                    </VBox>
                     <VBox HBox.hgrow="SOMETIMES" prefWidth="60">
                         <Label text="Qtd:" style="-fx-font-size: 10px;"/>
                         <TextField fx:id="txtQtd" promptText="0" maxWidth="Infinity" />
@@ -117,6 +127,69 @@
             </HBox>
 
             <Label text="(Gráficos TTT serão implementados aqui futuramente)" style="-fx-text-fill: #bdc3c7;"/>
+        </VBox>
+    </Tab>
+
+    <Tab text="💰 Orçamento e Caixa" onSelectionChanged="#atualizarFinanceiro">
+        <VBox spacing="20.0">
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
+
+            <HBox spacing="20" alignment="CENTER">
+                <VBox alignment="CENTER" style="-fx-background-color: #e8f8f5; -fx-padding: 15; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);">
+                    <Label text="Entradas (Receitas)" style="-fx-text-fill: #27ae60; -fx-font-weight: bold;"/>
+                    <Label fx:id="lblTotalEntradas" text="R$ 0,00" style="-fx-font-size: 18px;"/>
+                </VBox>
+
+                <VBox alignment="CENTER" style="-fx-background-color: #fdedec; -fx-padding: 15; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);">
+                    <Label text="Saídas (Despesas)" style="-fx-text-fill: #c0392b; -fx-font-weight: bold;"/>
+                    <Label fx:id="lblTotalSaidas" text="R$ 0,00" style="-fx-font-size: 18px;"/>
+                </VBox>
+
+                <VBox alignment="CENTER" style="-fx-background-color: #ebf5fb; -fx-padding: 15; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);">
+                    <Label text="Saldo Atual" style="-fx-text-fill: #2980b9; -fx-font-weight: bold;"/>
+                    <Label fx:id="lblSaldoFinanceiro" text="R$ 0,00" style="-fx-font-size: 22px; -fx-font-weight: bold;"/>
+                </VBox>
+            </HBox>
+
+            <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="🎯 Meta do Mês:" style="-fx-font-weight: bold; -fx-font-size: 16px;"/>
+
+                    <TextField fx:id="txtMetaInput" promptText="Definir Valor (R$)" prefWidth="120"/>
+
+                    <Button text="Atualizar Meta" onAction="#handleSalvarMeta" style="-fx-background-color: #8e44ad; -fx-text-fill: white; -fx-font-weight: bold;"/>
+
+                    <VBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
+                        <Label text="Falta para atingir:" style="-fx-text-fill: #7f8c8d;"/>
+                        <Label fx:id="lblFaltaMeta" text="R$ 0,00" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e67e22;"/>
+                    </VBox>
+                </HBox>
+
+                <VBox spacing="5">
+                    <ProgressBar fx:id="barraMeta" maxWidth="Infinity" progress="0.0" style="-fx-accent: #27ae60;" prefHeight="20"/>
+
+                    <Label fx:id="lblPorcentagemMeta" text="0% Concluído" style="-fx-font-size: 12px;" alignment="CENTER" maxWidth="Infinity"/>
+                </VBox>
+            </VBox>
+
+            <Label text="Lançamento Manual (Conta de Luz, Venda Avulsa, etc):" style="-fx-font-weight: bold;"/>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <ComboBox fx:id="cbTipoTransacao" promptText="Tipo"/>
+                <TextField fx:id="txtDescTransacao" promptText="Descrição (ex: Conta de Luz)" HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="txtValorTransacao" promptText="Valor (R$)" prefWidth="100"/>
+                <Button text="Registrar" onAction="#handleSalvarTransacao" style="-fx-background-color: #3498db; -fx-text-fill: white;"/>
+            </HBox>
+
+            <Label text="Extrato de Movimentações:" style="-fx-font-weight: bold; margin-top: 10px;"/>
+            <TableView fx:id="tabelaFinanceira" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colFinTipo" text="Tipo" prefWidth="100"/>
+                    <TableColumn fx:id="colFinDesc" text="Descrição" prefWidth="300"/>
+                    <TableColumn fx:id="colFinValor" text="Valor" prefWidth="100"/>
+                </columns>
+            </TableView>
         </VBox>
     </Tab>
 

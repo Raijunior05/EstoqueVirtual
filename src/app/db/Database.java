@@ -47,7 +47,8 @@ public class Database {
                 nome TEXT,
                 categoria TEXT,
                 marca TEXT,
-                preco REAL,
+                preco_custo REAL,  
+                preco REAL, --preço da Venda
                 estoque INTEGER,
                 estoque_minimo INTEGER,
                 
@@ -69,6 +70,13 @@ public class Database {
                 valor REAL
             );
         """;
+
+        // --- TABELA DE META (Guarda apenas 1 registro, ID=1) ---
+        String sqlMeta = "CREATE TABLE IF NOT EXISTS meta_financeira (id INTEGER PRIMARY KEY, valor REAL)";
+        stmt.execute(sqlMeta);
+
+        // Inicializa com 0 se estiver vazia para evitar erros
+        stmt.execute("INSERT OR IGNORE INTO meta_financeira (id, valor) VALUES (1, 0.0)");
 
         stmt.execute(sqlProdutos);
         stmt.execute(sqlTransacoes);
