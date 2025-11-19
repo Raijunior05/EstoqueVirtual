@@ -11,19 +11,20 @@ public class ProdutoDAO implements ICrud<Produto> {
     // --- SALVAR (INSERT) ---
     @Override
     public void salvar(Produto p) {
-        String sql = "INSERT INTO produtos (nome, categoria, marca, preco, estoque, estoque_minimo, tipo_produto, especificacao_int, especificacao_double, especificacao_texto) VALUES (?,?,?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO produtos (nome, categoria, marca, preco_custo, preco, estoque, estoque_minimo, tipo_produto, especificacao_int, especificacao_double, especificacao_texto) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
 
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
             // 1. Dados Comuns
             stmt.setString(1, p.getNome());
             stmt.setString(2, p.getCategoria());
             stmt.setString(3, p.getMarca());
-            stmt.setDouble(4, p.getPreco());
-            stmt.setInt(5, p.getEstoque());
-            stmt.setInt(6, p.getEstoqueMinimo());
+            stmt.setDouble(4, p.getPrecoCusto());
+            stmt.setDouble(5, p.getPreco());
+            stmt.setInt(6, p.getEstoque());
+            stmt.setInt(7, p.getEstoqueMinimo());
 
             // 2. Dados Específicos (Polimorfismo no Banco)
-            configurarStatementEspecifico(stmt, p, 7, 8, 9, 10);
+            configurarStatementEspecifico(stmt, p, 8, 9, 10, 11);
 
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -35,20 +36,21 @@ public class ProdutoDAO implements ICrud<Produto> {
     // --- ATUALIZAR (UPDATE) ---
     @Override
     public void atualizar(Produto p) {
-        String sql = "UPDATE produtos SET nome=?, categoria=?, marca=?, preco=?, estoque=?, estoque_minimo=?, tipo_produto=?, especificacao_int=?, especificacao_double=?, especificacao_texto=? WHERE id=?";
+        String sql = "UPDATE produtos SET nome=?, categoria=?, marca=?, preco_custo=?, preco=?, estoque=?, estoque_minimo=?, tipo_produto=?, especificacao_int=?, especificacao_double=?, especificacao_texto=? WHERE id=?";
 
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
             stmt.setString(1, p.getNome());
             stmt.setString(2, p.getCategoria());
             stmt.setString(3, p.getMarca());
-            stmt.setDouble(4, p.getPreco());
-            stmt.setInt(5, p.getEstoque());
-            stmt.setInt(6, p.getEstoqueMinimo());
+            stmt.setDouble(4, p.getPrecoCusto());
+            stmt.setDouble(5, p.getPreco());
+            stmt.setInt(6, p.getEstoque());
+            stmt.setInt(7, p.getEstoqueMinimo());
 
             // Configura os dados específicos nas posições corretas
-            configurarStatementEspecifico(stmt, p, 7, 8, 9, 10);
+            configurarStatementEspecifico(stmt, p, 8, 9, 10, 11);
 
-            stmt.setInt(11, p.getId()); // ID para o WHERE
+            stmt.setInt(12, p.getId()); // ID para o WHERE
 
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -89,7 +91,7 @@ public class ProdutoDAO implements ICrud<Produto> {
     }
 
     // ==================================================================================
-    // MÉTODOS AUXILIARES (Para não repetir código gigante)
+    // MÉTODOS AUXILIARES
     // ==================================================================================
 
     /**
@@ -154,6 +156,7 @@ public class ProdutoDAO implements ICrud<Produto> {
         int id = rs.getInt("id");
         String nome = rs.getString("nome");
         String marca = rs.getString("marca");
+        double precoCusto = rs.getDouble("preco_custo");
         double preco = rs.getDouble("preco");
         int estoque = rs.getInt("estoque");
         String tipo = rs.getString("tipo_produto");
@@ -167,27 +170,27 @@ public class ProdutoDAO implements ICrud<Produto> {
 
         switch (tipo) {
             case "Mouse":
-                return new Mouse(id, nome, marca, preco, estoque, specInt);
+                return new Mouse(id, nome, marca, precoCusto, preco, estoque, specInt);
             case "Monitor":
-                return new Monitor(id, nome, marca, preco, estoque, specDouble);
+                return new Monitor(id, nome, marca, precoCusto, preco, estoque, specDouble);
             case "Teclado":
-                return new Teclado(id, nome, marca, preco, estoque, specTexto);
+                return new Teclado(id, nome, marca, precoCusto, preco, estoque, specTexto);
             case "Armazenamento":
-                return new Armazenamento(id, nome, marca, preco, estoque, specInt);
+                return new Armazenamento(id, nome, marca, precoCusto, preco, estoque, specInt);
             case "Roteador":
-                return new Roteador(id, nome, marca, preco, estoque, specInt);
+                return new Roteador(id, nome, marca, precoCusto, preco, estoque, specInt);
             case "Microfone":
-                return new Microfone(id, nome, marca, preco, estoque, specTexto);
+                return new Microfone(id, nome, marca, precoCusto, preco, estoque, specTexto);
             case "Camera":
-                return new Camera(id, nome, marca, preco, estoque, specTexto);
+                return new Camera(id, nome, marca, precoCusto,preco, estoque, specTexto);
             case "Fone":
-                return new Fone(id, nome, marca, preco, estoque, specTexto);
+                return new Fone(id, nome, marca, precoCusto, preco, estoque, specTexto);
             case "Impressora":
-                return new Impressora(id, nome, marca, preco, estoque, specTexto);
+                return new Impressora(id, nome, marca, precoCusto, preco, estoque, specTexto);
             case "Controle":
-                return new Controle(id, nome, marca, preco, estoque, specTexto);
+                return new Controle(id, nome, marca, precoCusto, preco, estoque, specTexto);
             default:
-                return new Produto(id, nome, "Geral", marca, preco, estoque, 5);
+                return new Produto(id, nome, "Geral", marca, precoCusto, preco, estoque, 5);
         }
     }
 }
