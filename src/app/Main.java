@@ -10,7 +10,7 @@ public class Main extends Application {
     public void start(Stage stage) throws Exception {
         FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("view/MainView.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 800, 600);
-        stage.setTitle("Sistema TechManager v1.0");
+        stage.setTitle("Estoque Virtual v1.0");
         stage.setScene(scene);
         stage.show();
     }

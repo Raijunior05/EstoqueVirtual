@@ -1,39 +1,123 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
-<TabPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.view.MainController">
-    <Tab text="📦 Estoque" closable="false">
-        <VBox spacing="10" style="-fx-padding: 15;">
+<TabPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.view.MainController" tabClosingPolicy="UNAVAILABLE">
+
+    <Tab text="📦 Gerenciar Estoque">
+        <VBox spacing="15.0">
+            <padding>
+                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+            </padding>
+
             <TableView fx:id="tabelaProdutos" VBox.vgrow="ALWAYS">
                 <columns>
-                    <TableColumn fx:id="colNome" text="Produto" prefWidth="200"/>
-                    <TableColumn fx:id="colMarca" text="Marca" prefWidth="100"/>
-                    <TableColumn fx:id="colPreco" text="Preço (R$)" prefWidth="100"/>
-                    <TableColumn fx:id="colEstoque" text="Quantidade" prefWidth="100"/>
+                    <TableColumn fx:id="colNome" text="Produto / Modelo" />
+                    <TableColumn fx:id="colMarca" text="Marca" />
+                    <TableColumn fx:id="colSpec" text="Especificação (Detalhe)" />
+                    <TableColumn fx:id="colPreco" text="Preço (R$)" />
+                    <TableColumn fx:id="colEstoque" style="-fx-alignment: CENTER;" text="Qtd" />
                 </columns>
+                <columnResizePolicy>
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                </columnResizePolicy>
             </TableView>
-            <HBox spacing="10">
-                <TextField fx:id="txtNome" promptText="Nome"/>
-                <TextField fx:id="txtMarca" promptText="Marca"/>
-                <TextField fx:id="txtPreco" promptText="Preço" prefWidth="80"/>
-                <TextField fx:id="txtQtd" promptText="Qtd" prefWidth="60"/>
-                <Button text="Novo Produto" onAction="#handleSalvarProduto" style="-fx-background-color: #27ae60; -fx-text-fill: white;"/>
-                <Button text="Repor (+)" onAction="#handleReporEstoque" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;"/>
-                <Button text="Baixar (-)" onAction="#handleRemoverProduto" style="-fx-background-color: #e74c3c; -fx-text-fill: white;"/>
+
+            <VBox spacing="10.0" style="-fx-border-color: #bdc3c7; -fx-border-radius: 5; -fx-padding: 10;">
+                <Label style="-fx-font-weight: bold;" text="Adicionar Novo Produto:" />
+
+                <HBox spacing="10.0" alignment="CENTER_LEFT">
+                    <VBox HBox.hgrow="SOMETIMES">
+                        <Label text="Tipo:" style="-fx-font-size: 10px;"/>
+                        <ComboBox fx:id="cbTipo" maxWidth="Infinity" promptText="Selecione..." />
+                    </VBox>
+
+                    <VBox HBox.hgrow="ALWAYS">
+                        <Label text="Nome:" style="-fx-font-size: 10px;"/>
+                        <TextField fx:id="txtNome" promptText="Modelo" maxWidth="Infinity" />
+                    </VBox>
+
+                    <VBox HBox.hgrow="SOMETIMES">
+                        <Label text="Marca:" style="-fx-font-size: 10px;"/>
+                        <TextField fx:id="txtMarca" promptText="Marca" maxWidth="Infinity" />
+                    </VBox>
+
+                    <VBox HBox.hgrow="SOMETIMES">
+                        <Label text="Preço:" style="-fx-font-size: 10px;"/>
+                        <TextField fx:id="txtPreco" promptText="0.00" maxWidth="Infinity" />
+                    </VBox>
+
+                    <VBox HBox.hgrow="SOMETIMES" prefWidth="60">
+                        <Label text="Qtd:" style="-fx-font-size: 10px;"/>
+                        <TextField fx:id="txtQtd" promptText="0" maxWidth="Infinity" />
+                    </VBox>
+                </HBox>
+
+                <HBox fx:id="boxEspecificos" alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #ecf0f1; -fx-padding: 8; -fx-background-radius: 5;">
+                    <Label style="-fx-font-weight: bold; -fx-text-fill: #2c3e50;" text="Detalhes Técnicos:" />
+                    <TextField fx:id="txtSpecInt" managed="false" promptText="Valor Inteiro (ex: DPI)" visible="false" HBox.hgrow="ALWAYS" />
+                    <TextField fx:id="txtSpecDouble" managed="false" promptText="Polegadas (ex: 24.5)" visible="false" HBox.hgrow="ALWAYS" />
+                    <TextField fx:id="txtSpecTexto" managed="false" promptText="Detalhe (ex: Mecânico)" visible="false" HBox.hgrow="ALWAYS" />
+                </HBox>
+
+                <Button onAction="#handleSalvarProduto" maxWidth="Infinity" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" text="💾 SALVAR NOVO PRODUTO" />
+            </VBox>
+
+            <HBox spacing="10.0">
+                <Button onAction="#handleReporEstoque" maxWidth="Infinity" HBox.hgrow="ALWAYS"
+                        style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold;"
+                        text="➕ REPOR ESTOQUE" />
+
+                <Button onAction="#handleBaixarEstoque" maxWidth="Infinity" HBox.hgrow="ALWAYS"
+                        style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold;"
+                        text="➖ VENDER (BAIXA)" />
+
+                <Button onAction="#handleRemoverProduto" maxWidth="Infinity" HBox.hgrow="ALWAYS"
+                        style="-fx-background-color: #c0392b; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold;"
+                        text="❌ REMOVER CADASTRO" />
             </HBox>
         </VBox>
     </Tab>
 
-    <Tab text="📊 Dashboard &amp; Avisos" closable="false" onSelectionChanged="#atualizarDashboard">
-        <VBox spacing="15" style="-fx-padding: 20;">
-            <Label text="Avisos Importantes (LLL)" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
-            <ListView fx:id="listaAlertas" prefHeight="200" style="-fx-border-color: red;"/>
+    <Tab onSelectionChanged="#atualizarDashboard" text="🔔 Avisos Importantes">
+        <VBox spacing="20.0">
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
 
-            <Label text="Resumo Financeiro" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
-            <Label fx:id="lblBalanco" text="Carregando..." style="-fx-font-size: 14px;"/>
+            <Label style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;" text="⚠️ Produtos com Estoque Baixo" />
+            <Label text="Sugestão: Realize a reposição dos itens abaixo imediatamente." />
+
+            <ListView fx:id="listaAlertas" style="-fx-border-color: #e74c3c; -fx-background-color: #fff5f5; -fx-font-size: 16px;" VBox.vgrow="ALWAYS" />
         </VBox>
     </Tab>
+
+    <Tab text="📊 Dashboard Financeiro">
+        <VBox spacing="20.0" alignment="TOP_CENTER">
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
+
+            <Label style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2980b9;" text="Visão Geral do Negócio" />
+
+            <HBox spacing="20" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 30; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5); -fx-background-radius: 10;">
+                <Label text="Balanço Patrimonial (Estoque):" style="-fx-font-size: 18px; -fx-text-fill: #7f8c8d;"/>
+                <Label fx:id="lblBalanco" text="R$ 0,00" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
+            </HBox>
+
+            <Label text="(Gráficos TTT serão implementados aqui futuramente)" style="-fx-text-fill: #bdc3c7;"/>
+        </VBox>
+    </Tab>
+
 </TabPane>
