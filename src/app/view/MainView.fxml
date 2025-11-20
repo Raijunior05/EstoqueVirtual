@@ -22,6 +22,11 @@
                 <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
             </padding>
 
+            <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: white; -fx-padding: 10; -fx-background-radius: 5; -fx-border-color: #bdc3c7; -fx-border-radius: 5;">
+                <Label text="🔍 Pesquisar:" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
+                <TextField fx:id="txtPesquisa" promptText="Digite nome, marca ou ID..." HBox.hgrow="ALWAYS"/>
+            </HBox>
+
             <TableView fx:id="tabelaProdutos" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="colNome" text="Produto / Modelo" />
