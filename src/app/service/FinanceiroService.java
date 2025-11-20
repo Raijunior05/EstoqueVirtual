@@ -10,12 +10,12 @@ public class FinanceiroService {
     private TransacaoDAO dao = new TransacaoDAO();
     private MetaDAO metaDAO = new MetaDAO();
 
-    public void registrarReceita(String descricao, double valor) {
-        dao.salvar(new app.model.Receita(descricao, valor));
+    public void registrarReceita(String descricao, double valor, String data) {
+        dao.salvar(new app.model.Receita(descricao, valor, data), data);
     }
 
-    public void registrarDespesa(String descricao, double valor) {
-        dao.salvar(new app.model.Despesa(descricao, valor));
+    public void registrarDespesa(String descricao, double valor, String data) {
+        dao.salvar(new app.model.Despesa(descricao, valor, data), data);
     }
 
     public List<Transacao> getHistorico() {
