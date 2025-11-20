@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.ProgressBar?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.DatePicker?> <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableColumn?>
@@ -32,7 +32,7 @@
                     <TableColumn fx:id="colNome" text="Produto / Modelo" />
                     <TableColumn fx:id="colMarca" text="Marca" />
                     <TableColumn fx:id="colSpec" text="Especificação (Detalhe)" />
-                    <TableColumn fx:id="colPreco" text="Preço (R$)" />
+                    <TableColumn fx:id="colPreco" text="Preço Venda (R$)" />
                     <TableColumn fx:id="colEstoque" style="-fx-alignment: CENTER;" text="Qtd" />
                 </columns>
                 <columnResizePolicy>
@@ -48,27 +48,22 @@
                         <Label text="Tipo:" style="-fx-font-size: 10px;"/>
                         <ComboBox fx:id="cbTipo" maxWidth="Infinity" promptText="Selecione..." />
                     </VBox>
-
                     <VBox HBox.hgrow="ALWAYS">
                         <Label text="Nome:" style="-fx-font-size: 10px;"/>
                         <TextField fx:id="txtNome" promptText="Modelo" maxWidth="Infinity" />
                     </VBox>
-
                     <VBox HBox.hgrow="SOMETIMES">
                         <Label text="Marca:" style="-fx-font-size: 10px;"/>
                         <TextField fx:id="txtMarca" promptText="Marca" maxWidth="Infinity" />
                     </VBox>
-
                     <VBox HBox.hgrow="SOMETIMES" prefWidth="80">
                         <Label text="Custo (R$):" style="-fx-font-size: 10px;"/>
                         <TextField fx:id="txtPrecoCusto" promptText="0.00" maxWidth="Infinity" />
                     </VBox>
-
                     <VBox HBox.hgrow="SOMETIMES" prefWidth="70">
                         <Label text="Margem %:" style="-fx-font-size: 10px;"/>
                         <TextField fx:id="txtMargem" promptText="Ex: 50" maxWidth="Infinity" />
                     </VBox>
-
                     <VBox HBox.hgrow="SOMETIMES" prefWidth="80">
                         <Label text="Venda (R$):" style="-fx-font-size: 10px; -fx-font-weight: bold;"/>
                         <TextField fx:id="txtPrecoVenda" promptText="0.00" maxWidth="Infinity" style="-fx-background-color: #e8f8f5;"/>
@@ -79,28 +74,35 @@
                     </VBox>
                 </HBox>
 
-                <HBox fx:id="boxEspecificos" alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #ecf0f1; -fx-padding: 8; -fx-background-radius: 5;">
-                    <Label style="-fx-font-weight: bold; -fx-text-fill: #2c3e50;" text="Detalhes Técnicos:" />
-                    <TextField fx:id="txtSpecInt" managed="false" promptText="Valor Inteiro (ex: DPI)" visible="false" HBox.hgrow="ALWAYS" />
-                    <TextField fx:id="txtSpecDouble" managed="false" promptText="Polegadas (ex: 24.5)" visible="false" HBox.hgrow="ALWAYS" />
-                    <TextField fx:id="txtSpecTexto" managed="false" promptText="Detalhe (ex: Mecânico)" visible="false" HBox.hgrow="ALWAYS" />
+                <HBox spacing="10.0" alignment="CENTER_LEFT">
+                    <HBox fx:id="boxEspecificos" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #ecf0f1; -fx-padding: 8; -fx-background-radius: 5;">
+                        <Label style="-fx-font-weight: bold; -fx-text-fill: #2c3e50;" text="Detalhes Técnicos:" />
+                        <TextField fx:id="txtSpecInt" managed="false" promptText="Valor Inteiro (ex: DPI)" visible="false" HBox.hgrow="ALWAYS" />
+                        <TextField fx:id="txtSpecDouble" managed="false" promptText="Polegadas (ex: 24.5)" visible="false" HBox.hgrow="ALWAYS" />
+                        <TextField fx:id="txtSpecTexto" managed="false" promptText="Detalhe (ex: Mecânico)" visible="false" HBox.hgrow="ALWAYS" />
+                    </HBox>
+
+                    <VBox prefWidth="80">
+                        <Label text="Est. Mínimo:" style="-fx-font-size: 10px; -fx-text-fill: #e67e22;"/>
+                        <TextField fx:id="txtEstoqueMin" promptText="Ex: 5" text="5" />
+                    </VBox>
+
+                    <VBox prefWidth="110">
+                        <Label text="Data Cadastro:" style="-fx-font-size: 10px;"/>
+                        <DatePicker fx:id="dpDataCadastro" />
+                    </VBox>
                 </HBox>
 
                 <Button onAction="#handleSalvarProduto" maxWidth="Infinity" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" text="💾 SALVAR NOVO PRODUTO" />
             </VBox>
 
-            <HBox spacing="10.0">
-                <Button onAction="#handleReporEstoque" maxWidth="Infinity" HBox.hgrow="ALWAYS"
-                        style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold;"
-                        text="➕ REPOR ESTOQUE" />
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                <Label text="Data da Ação:" style="-fx-font-weight: bold;"/>
+                <DatePicker fx:id="dpDataOperacao" prefWidth="120" />
 
-                <Button onAction="#handleBaixarEstoque" maxWidth="Infinity" HBox.hgrow="ALWAYS"
-                        style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold;"
-                        text="➖ VENDER (BAIXA)" />
-
-                <Button onAction="#handleRemoverProduto" maxWidth="Infinity" HBox.hgrow="ALWAYS"
-                        style="-fx-background-color: #c0392b; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold;"
-                        text="❌ REMOVER CADASTRO" />
+                <Button onAction="#handleReporEstoque" maxWidth="Infinity" HBox.hgrow="ALWAYS" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold;" text="➕ REPOR ESTOQUE" />
+                <Button onAction="#handleBaixarEstoque" maxWidth="Infinity" HBox.hgrow="ALWAYS" style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold;" text="➖ VENDER (BAIXA)" />
+                <Button onAction="#handleRemoverProduto" maxWidth="Infinity" HBox.hgrow="ALWAYS" style="-fx-background-color: #c0392b; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold;" text="❌ REMOVER CADASTRO" />
             </HBox>
         </VBox>
     </Tab>
@@ -110,10 +112,8 @@
             <padding>
                 <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
             </padding>
-
             <Label style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;" text="⚠️ Produtos com Estoque Baixo" />
             <Label text="Sugestão: Realize a reposição dos itens abaixo imediatamente." />
-
             <ListView fx:id="listaAlertas" style="-fx-border-color: #e74c3c; -fx-background-color: #fff5f5; -fx-font-size: 16px;" VBox.vgrow="ALWAYS" />
         </VBox>
     </Tab>
@@ -123,14 +123,11 @@
             <padding>
                 <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
             </padding>
-
             <Label style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2980b9;" text="Visão Geral do Negócio" />
-
             <HBox spacing="20" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 30; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5); -fx-background-radius: 10;">
                 <Label text="Balanço Patrimonial (Estoque):" style="-fx-font-size: 18px; -fx-text-fill: #7f8c8d;"/>
                 <Label fx:id="lblBalanco" text="R$ 0,00" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
             </HBox>
-
             <Label text="(Gráficos TTT serão implementados aqui futuramente)" style="-fx-text-fill: #bdc3c7;"/>
         </VBox>
     </Tab>
@@ -146,12 +143,10 @@
                     <Label text="Entradas (Receitas)" style="-fx-text-fill: #27ae60; -fx-font-weight: bold;"/>
                     <Label fx:id="lblTotalEntradas" text="R$ 0,00" style="-fx-font-size: 18px;"/>
                 </VBox>
-
                 <VBox alignment="CENTER" style="-fx-background-color: #fdedec; -fx-padding: 15; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);">
                     <Label text="Saídas (Despesas)" style="-fx-text-fill: #c0392b; -fx-font-weight: bold;"/>
                     <Label fx:id="lblTotalSaidas" text="R$ 0,00" style="-fx-font-size: 18px;"/>
                 </VBox>
-
                 <VBox alignment="CENTER" style="-fx-background-color: #ebf5fb; -fx-padding: 15; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);">
                     <Label text="Saldo Atual" style="-fx-text-fill: #2980b9; -fx-font-weight: bold;"/>
                     <Label fx:id="lblSaldoFinanceiro" text="R$ 0,00" style="-fx-font-size: 22px; -fx-font-weight: bold;"/>
@@ -161,26 +156,23 @@
             <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);">
                 <HBox alignment="CENTER_LEFT" spacing="10">
                     <Label text="🎯 Meta do Mês:" style="-fx-font-weight: bold; -fx-font-size: 16px;"/>
-
                     <TextField fx:id="txtMetaInput" promptText="Definir Valor (R$)" prefWidth="120"/>
-
                     <Button text="Atualizar Meta" onAction="#handleSalvarMeta" style="-fx-background-color: #8e44ad; -fx-text-fill: white; -fx-font-weight: bold;"/>
-
                     <VBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
                         <Label text="Falta para atingir:" style="-fx-text-fill: #7f8c8d;"/>
                         <Label fx:id="lblFaltaMeta" text="R$ 0,00" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e67e22;"/>
                     </VBox>
                 </HBox>
-
                 <VBox spacing="5">
                     <ProgressBar fx:id="barraMeta" maxWidth="Infinity" progress="0.0" style="-fx-accent: #27ae60;" prefHeight="20"/>
-
                     <Label fx:id="lblPorcentagemMeta" text="0% Concluído" style="-fx-font-size: 12px;" alignment="CENTER" maxWidth="Infinity"/>
                 </VBox>
             </VBox>
 
-            <Label text="Lançamento Manual (Conta de Luz, Venda Avulsa, etc):" style="-fx-font-weight: bold;"/>
+            <Label text="Lançamento Manual:" style="-fx-font-weight: bold;"/>
             <HBox spacing="10" alignment="CENTER_LEFT">
+                <DatePicker fx:id="dpDataFinanceiro" prefWidth="120" promptText="Data"/>
+
                 <ComboBox fx:id="cbTipoTransacao" promptText="Tipo"/>
                 <TextField fx:id="txtDescTransacao" promptText="Descrição (ex: Conta de Luz)" HBox.hgrow="ALWAYS"/>
                 <TextField fx:id="txtValorTransacao" promptText="Valor (R$)" prefWidth="100"/>
@@ -190,6 +182,7 @@
             <Label text="Extrato de Movimentações:" style="-fx-font-weight: bold; margin-top: 10px;"/>
             <TableView fx:id="tabelaFinanceira" VBox.vgrow="ALWAYS">
                 <columns>
+                    <TableColumn fx:id="colFinData" text="Data" prefWidth="100"/>
                     <TableColumn fx:id="colFinTipo" text="Tipo" prefWidth="100"/>
                     <TableColumn fx:id="colFinDesc" text="Descrição" prefWidth="300"/>
                     <TableColumn fx:id="colFinValor" text="Valor" prefWidth="100"/>
