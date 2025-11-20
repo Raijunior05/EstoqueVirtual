@@ -6,6 +6,9 @@ import app.service.FinanceiroService;
 import app.service.MonitorService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -20,6 +23,12 @@ public class MainController {
     @FXML private TableColumn<Produto, Double> colPreco;
     @FXML private TableColumn<Produto, Integer> colEstoque;
     @FXML private TableColumn<Produto, String> colSpec;
+
+    // CAMPO DE PESQUISA
+    @FXML private TextField txtPesquisa;
+
+    // LISTA MESTRE (Guarda os dados originais para o filtro funcionar)
+    private ObservableList<Produto> masterData = FXCollections.observableArrayList();
 
     // Campos de Cadastro
     @FXML private ComboBox<String> cbTipo;
@@ -41,7 +50,7 @@ public class MainController {
     @FXML private TableColumn<Transacao, String> colFinDesc;
     @FXML private TableColumn<Transacao, Double> colFinValor;
 
-    // --- META FINANCEIRA (ISSO ERA O QUE FALTAVA) ---
+    // --- META FINANCEIRA
     @FXML private TextField txtMetaInput;
     @FXML private Label lblFaltaMeta, lblPorcentagemMeta;
     @FXML private ProgressBar barraMeta;
@@ -82,6 +91,44 @@ public class MainController {
             else if (p instanceof Controle) detalhe = ((Controle) p).getCompatibilidade();
             return new SimpleStringProperty(detalhe);
         });
+
+        // --- 2. CONFIGURAÇÃO DA PESQUISA (FILTRO) ---
+
+        // a) Carrega dados do banco para a memória (masterData)
+        masterData.addAll(produtoDAO.listarTodos());
+
+        // b) Cria a lista filtrada envolvendo a masterData
+        FilteredList<Produto> filteredData = new FilteredList<>(masterData, p -> true);
+
+        // c) Adiciona o "ouvinte" no campo de texto
+        if (txtPesquisa != null) {
+            txtPesquisa.textProperty().addListener((observable, oldValue, newValue) -> {
+                filteredData.setPredicate(produto -> {
+                    // Se o filtro estiver vazio, mostra tudo
+                    if (newValue == null || newValue.isEmpty()) {
+                        return true;
+                    }
+
+                    String lowerCaseFilter = newValue.toLowerCase();
+
+                    // Regras do filtro (Nome, Marca, Categoria)
+                    if (produto.getNome().toLowerCase().contains(lowerCaseFilter)) return true;
+                    if (produto.getMarca().toLowerCase().contains(lowerCaseFilter)) return true;
+                    if (produto.getCategoria().toLowerCase().contains(lowerCaseFilter)) return true;
+
+                    return false; // Não achou
+                });
+            });
+        }
+
+        // d) Cria a lista ordenada (para permitir clicar no cabeçalho da tabela)
+        SortedList<Produto> sortedData = new SortedList<>(filteredData);
+        sortedData.comparatorProperty().bind(tabelaProdutos.comparatorProperty());
+
+        // e) Joga a lista final na tabela
+        tabelaProdutos.setItems(sortedData);
+
+        // ---------------------------------------------
 
         // 3. Configuração do ComboBox
         cbTipo.setItems(FXCollections.observableArrayList(
@@ -126,7 +173,6 @@ public class MainController {
         });
 
         configurarFinanceiro();
-        carregarTabela();
         atualizarDashboard();
 
         // Carrega a meta inicial no campo
@@ -356,7 +402,7 @@ public class MainController {
         Produto selecionado = tabelaProdutos.getSelectionModel().getSelectedItem();
         if (selecionado != null) {
             produtoDAO.deletar(selecionado.getId());
-            tabelaProdutos.getItems().remove(selecionado);
+            masterData.remove(selecionado);;
             atualizarDashboard();
         }
     }
@@ -399,7 +445,8 @@ public class MainController {
     // --- UTILS & ATUALIZAÇÕES ---
 
     private void carregarTabela() {
-        tabelaProdutos.setItems(FXCollections.observableArrayList(produtoDAO.listarTodos()));
+        masterData.clear();
+        masterData.addAll(produtoDAO.listarTodos());
     }
 
     @FXML
