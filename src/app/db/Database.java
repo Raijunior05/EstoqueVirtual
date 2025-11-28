@@ -52,6 +52,10 @@ public class Database {
                 estoque INTEGER,
                 estoque_minimo INTEGER,
                 
+                data_cadastro TEXT,
+                qtd_vendida INTEGER DEFAULT 0,
+                valor_total_vendido REAL DEFAULT 0.0,
+                
                 -- Colunas para Polimorfismo (Subclasses) --
                 tipo_produto TEXT,          -- Ex: 'Mouse', 'Monitor', 'Teclado'
                 especificacao_int INTEGER,  -- Mouse(DPI), Armazenamento(GB), Roteador(Mbps)

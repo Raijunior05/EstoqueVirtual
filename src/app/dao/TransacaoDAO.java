@@ -5,29 +5,21 @@ import app.model.Despesa;
 import app.model.Receita;
 import app.model.Transacao;
 import java.sql.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TransacaoDAO {
 
-    public void salvar(Transacao t) {
+    public void salvar(Transacao t, String dataManual) {
         String sql = "INSERT INTO transacoes (data_hora, tipo, descricao, valor) VALUES (?, ?, ?, ?)";
 
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
-            String dataHora = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            String tipo = (t instanceof Receita) ? "RECEITA" : "DESPESA";
-
-            stmt.setString(1, dataHora);
-            stmt.setString(2, tipo);
+            stmt.setString(1, dataManual); // Usa a data que veio da tela
+            stmt.setString(2, (t instanceof app.model.Receita) ? "RECEITA" : "DESPESA");
             stmt.setString(3, t.getDescricao());
             stmt.setDouble(4, t.getValor());
-
             stmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     public List<Transacao> listarTodas() {
@@ -41,13 +33,13 @@ public class TransacaoDAO {
                 String tipo = rs.getString("tipo");
                 String desc = rs.getString("descricao");
                 double valor = rs.getDouble("valor");
+                String data = rs.getString("data_hora");
 
                 if ("RECEITA".equals(tipo)) {
-                    lista.add(new Receita(desc, valor));
+                    lista.add(new Receita(desc, valor, data));
                 } else {
-                    lista.add(new Despesa(desc, valor));
+                    lista.add(new Despesa(desc, valor, data));
                 }
-                // Nota: Se quiser guardar a data no objeto, precisaria adicionar o campo Data na classe Transacao
             }
         } catch (SQLException e) {
             e.printStackTrace();

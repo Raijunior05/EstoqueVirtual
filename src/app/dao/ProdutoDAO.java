@@ -11,7 +11,7 @@ public class ProdutoDAO implements ICrud<Produto> {
     // --- SALVAR (INSERT) ---
     @Override
     public void salvar(Produto p) {
-        String sql = "INSERT INTO produtos (nome, categoria, marca, preco_custo, preco, estoque, estoque_minimo, tipo_produto, especificacao_int, especificacao_double, especificacao_texto) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO produtos (nome, categoria, marca, preco_custo, preco, estoque, estoque_minimo, data_cadastro, tipo_produto, especificacao_int, especificacao_double, especificacao_texto) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
 
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
             // 1. Dados Comuns
@@ -22,9 +22,10 @@ public class ProdutoDAO implements ICrud<Produto> {
             stmt.setDouble(5, p.getPreco());
             stmt.setInt(6, p.getEstoque());
             stmt.setInt(7, p.getEstoqueMinimo());
+            stmt.setString(8, p.getDataCadastro());
 
             // 2. Dados Específicos (Polimorfismo no Banco)
-            configurarStatementEspecifico(stmt, p, 8, 9, 10, 11);
+            configurarStatementEspecifico(stmt, p, 9, 10, 11, 12);
 
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -36,7 +37,7 @@ public class ProdutoDAO implements ICrud<Produto> {
     // --- ATUALIZAR (UPDATE) ---
     @Override
     public void atualizar(Produto p) {
-        String sql = "UPDATE produtos SET nome=?, categoria=?, marca=?, preco_custo=?, preco=?, estoque=?, estoque_minimo=?, tipo_produto=?, especificacao_int=?, especificacao_double=?, especificacao_texto=? WHERE id=?";
+        String sql = "UPDATE produtos SET nome=?, categoria=?, marca=?, preco_custo=?, preco=?, estoque=?, estoque_minimo=?, qtd_vendida=?, valor_total_vendido=?, tipo_produto=?, especificacao_int=?, especificacao_double=?, especificacao_texto=? WHERE id=?";
 
         try (PreparedStatement stmt = Database.getConnection().prepareStatement(sql)) {
             stmt.setString(1, p.getNome());
@@ -46,11 +47,13 @@ public class ProdutoDAO implements ICrud<Produto> {
             stmt.setDouble(5, p.getPreco());
             stmt.setInt(6, p.getEstoque());
             stmt.setInt(7, p.getEstoqueMinimo());
+            stmt.setInt(8, p.getQtdVendida());
+            stmt.setDouble(9, p.getValorTotalVendido());
 
             // Configura os dados específicos nas posições corretas
-            configurarStatementEspecifico(stmt, p, 8, 9, 10, 11);
+            configurarStatementEspecifico(stmt, p, 10, 11, 12, 13);
 
-            stmt.setInt(12, p.getId()); // ID para o WHERE
+            stmt.setInt(14, p.getId()); // ID para o WHERE
 
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -159,6 +162,12 @@ public class ProdutoDAO implements ICrud<Produto> {
         double precoCusto = rs.getDouble("preco_custo");
         double preco = rs.getDouble("preco");
         int estoque = rs.getInt("estoque");
+        int estMin = rs.getInt("estoque_minimo");
+        String dataCad = rs.getString("data_cadastro");
+        // Métricas
+        int qtdVendida = rs.getInt("qtd_vendida");
+        double totalVendido = rs.getDouble("valor_total_vendido");
+
         String tipo = rs.getString("tipo_produto");
 
         // Lê as colunas genéricas
@@ -168,29 +177,37 @@ public class ProdutoDAO implements ICrud<Produto> {
 
         if (tipo == null) tipo = "Outros";
 
+        Produto p = null;
+
         switch (tipo) {
             case "Mouse":
-                return new Mouse(id, nome, marca, precoCusto, preco, estoque, specInt);
+                return new Mouse(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specInt);
             case "Monitor":
-                return new Monitor(id, nome, marca, precoCusto, preco, estoque, specDouble);
+                return new Monitor(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specDouble);
             case "Teclado":
-                return new Teclado(id, nome, marca, precoCusto, preco, estoque, specTexto);
+                return new Teclado(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad,specTexto);
             case "Armazenamento":
-                return new Armazenamento(id, nome, marca, precoCusto, preco, estoque, specInt);
+                return new Armazenamento(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specInt);
             case "Roteador":
-                return new Roteador(id, nome, marca, precoCusto, preco, estoque, specInt);
+                return new Roteador(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specInt);
             case "Microfone":
-                return new Microfone(id, nome, marca, precoCusto, preco, estoque, specTexto);
+                return new Microfone(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specTexto);
             case "Camera":
-                return new Camera(id, nome, marca, precoCusto,preco, estoque, specTexto);
+                return new Camera(id, nome, marca, precoCusto,preco, estoque, estMin, dataCad, specTexto);
             case "Fone":
-                return new Fone(id, nome, marca, precoCusto, preco, estoque, specTexto);
+                return new Fone(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specTexto);
             case "Impressora":
-                return new Impressora(id, nome, marca, precoCusto, preco, estoque, specTexto);
+                return new Impressora(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specTexto);
             case "Controle":
-                return new Controle(id, nome, marca, precoCusto, preco, estoque, specTexto);
+                return new Controle(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specTexto);
             default:
-                return new Produto(id, nome, "Geral", marca, precoCusto, preco, estoque, 5);
+             p = new Produto(id, nome, "Geral", marca, precoCusto, preco, estoque, estMin, dataCad); break;
         }
+        // Seta as métricas que não estão no construtor
+        if (p != null) {
+            p.setQtdVendida(qtdVendida);
+            p.setValorTotalVendido(totalVendido);
+        }
+        return p;
     }
 }
