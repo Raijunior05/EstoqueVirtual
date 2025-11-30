@@ -5,6 +5,7 @@ public class Fone extends Produto {
     public Fone(int id, String nome, String marca, double precoCusto, double preco, int estoque, int estoqueMinimo, String dataCadastro, String conexao) {
         super(id, nome, "Fone", marca, precoCusto, preco, estoque, estoqueMinimo, dataCadastro);
         this.conexao = conexao;
+        setEstoqueMinimo(500);
     }
     public String getConexao() { return conexao; }
 }

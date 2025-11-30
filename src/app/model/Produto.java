@@ -46,4 +46,5 @@ public class Produto {
     public void setQtdVendida(int qtdVendida) { this.qtdVendida = qtdVendida; }
     public double getValorTotalVendido() { return valorTotalVendido; }
     public void setValorTotalVendido(double valorTotalVendido) { this.valorTotalVendido = valorTotalVendido; }
+    public void setEstoqueMinimo(int estoqueMinimo) { this.estoqueMinimo = estoqueMinimo; }
 }

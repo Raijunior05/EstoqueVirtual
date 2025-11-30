@@ -5,6 +5,7 @@ public class Impressora extends Produto {
     public Impressora(int id, String nome, String marca, double precoCusto, double preco, int estoque, int estoqueMinimo, String dataCadastro ,String tipoImpressao) {
         super(id, nome, "Impressora", marca, precoCusto,preco, estoque, estoqueMinimo, dataCadastro);
         this.tipoImpressao = tipoImpressao;
+        setEstoqueMinimo(50);
     }
     public String getTipoImpressao() { return tipoImpressao; }
 }

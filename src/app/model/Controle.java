@@ -5,6 +5,7 @@ public class Controle extends Produto {
     public Controle(int id, String nome, String marca, double precoCusto, double preco, int estoque, int estoqueMinimo, String dataCadastro, String compatibilidade) {
         super(id, nome, "Controle", marca, precoCusto, preco, estoque, estoqueMinimo, dataCadastro);
         this.compatibilidade = compatibilidade;
+        setEstoqueMinimo(300);
     }
     public String getCompatibilidade() { return compatibilidade; }
 }

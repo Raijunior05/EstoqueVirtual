@@ -15,6 +15,9 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import java.time.LocalDate;
 
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.XYChart;
+
 public class MainController {
 
     // Tabela e Colunas de Produtos
@@ -24,6 +27,8 @@ public class MainController {
     @FXML private TableColumn<Produto, Double> colPreco;
     @FXML private TableColumn<Produto, Integer> colEstoque;
     @FXML private TableColumn<Produto, String> colSpec;
+
+    @FXML private BarChart<String, Number> graficoEstoque;
 
     // CAMPO DE PESQUISA
     @FXML private TextField txtPesquisa;
@@ -186,11 +191,34 @@ public class MainController {
         configurarFinanceiro();
         atualizarDashboard();
 
+        atualizarGraficoAnalise();
+
         // Carrega a meta inicial no campo
         double metaAtual = financeiroService.getMeta();
         if (txtMetaInput != null) {
             txtMetaInput.setText(String.valueOf(metaAtual));
         }
+    }
+
+    private void atualizarGraficoAnalise() {
+        graficoEstoque.getData().clear(); // Limpa dados antigos
+
+        // Série 1: Estoque Atual (Barra Azul, geralmente)
+        XYChart.Series<String, Number> serieAtual = new XYChart.Series<>();
+        serieAtual.setName("Estoque Atual");
+
+        // Série 2: Estoque Mínimo (Barra Laranja, geralmente)
+        XYChart.Series<String, Number> serieMinimo = new XYChart.Series<>();
+        serieMinimo.setName("Mínimo Necessário");
+
+        // Pega os dados da lista que já existe na tabela
+        for (Produto p : masterData) {
+            serieAtual.getData().add(new XYChart.Data<>(p.getNome(), p.getEstoque()));
+            serieMinimo.getData().add(new XYChart.Data<>(p.getNome(), p.getEstoqueMinimo()));
+        }
+
+        // Adiciona as duas séries ao gráfico
+        graficoEstoque.getData().addAll(serieAtual, serieMinimo);
     }
 
     // funcao auxiliar para calcular o preço
@@ -468,6 +496,7 @@ public class MainController {
         listaAlertas.setItems(FXCollections.observableArrayList(monitorService.verificarAlertas()));
         double total = tabelaProdutos.getItems().stream().mapToDouble(p -> p.getPrecoCusto() * p.getEstoque()).sum();
         lblBalanco.setText(String.format("R$ %.2f", total));
+        atualizarGraficoAnalise();
     }
 
     @FXML

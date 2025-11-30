@@ -5,6 +5,7 @@ public class Armazenamento extends Produto {
     public Armazenamento(int id, String nome, String marca, double precoCusto, double preco, int estoque, int estoqueMinimo, String dataCadastro, int capacidadeGB) {
         super(id, nome, "Armazenamento", marca, precoCusto, preco, estoque, estoqueMinimo, dataCadastro);
         this.capacidadeGB = capacidadeGB;
+        setEstoqueMinimo(600);
     }
 
 

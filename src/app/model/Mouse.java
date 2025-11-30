@@ -5,6 +5,7 @@ public class Mouse extends Produto {
     public Mouse(int id, String nome, String marca, double precoCusto, double preco, int estoque, int estoqueMinimo, String dataCadastro, int dpi) {
         super(id, nome, "Mouse", marca, precoCusto, preco, estoque, estoqueMinimo, dataCadastro);
         this.dpi = dpi;
+        setEstoqueMinimo(500);
     }
     public int getDpi() { return dpi; }
 }
