@@ -164,9 +164,16 @@ public class ProdutoDAO implements ICrud<Produto> {
         int estoque = rs.getInt("estoque");
         int estMin = rs.getInt("estoque_minimo");
         String dataCad = rs.getString("data_cadastro");
-        // Métricas
-        int qtdVendida = rs.getInt("qtd_vendida");
-        double totalVendido = rs.getDouble("valor_total_vendido");
+
+        // Métricas financeiras (CRUCIAL PARA O PARETO)
+        int qtdVendida = 0;
+        double totalVendido = 0.0;
+        try {
+            qtdVendida = rs.getInt("qtd_vendida");
+            totalVendido = rs.getDouble("valor_total_vendido");
+        } catch (SQLException e) {
+            // Se a coluna não existir ainda no banco, assume 0
+        }
 
         String tipo = rs.getString("tipo_produto");
 
@@ -177,37 +184,53 @@ public class ProdutoDAO implements ICrud<Produto> {
 
         if (tipo == null) tipo = "Outros";
 
-        Produto p = null;
+        Produto p;
 
+        // Cria o objeto base
         switch (tipo) {
             case "Mouse":
-                return new Mouse(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specInt);
+                p = new Mouse(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specInt);
+                break;
             case "Monitor":
-                return new Monitor(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specDouble);
+                p = new Monitor(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specDouble);
+                break;
             case "Teclado":
-                return new Teclado(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad,specTexto);
+                p = new Teclado(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specTexto);
+                break;
             case "Armazenamento":
-                return new Armazenamento(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specInt);
+                p = new Armazenamento(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specInt);
+                break;
             case "Roteador":
-                return new Roteador(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specInt);
+                p = new Roteador(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specInt);
+                break;
             case "Microfone":
-                return new Microfone(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specTexto);
+                p = new Microfone(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specTexto);
+                break;
             case "Camera":
-                return new Camera(id, nome, marca, precoCusto,preco, estoque, estMin, dataCad, specTexto);
+                p = new Camera(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specTexto);
+                break;
             case "Fone":
-                return new Fone(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specTexto);
+                p = new Fone(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specTexto);
+                break;
             case "Impressora":
-                return new Impressora(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specTexto);
+                p = new Impressora(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specTexto);
+                break;
             case "Controle":
-                return new Controle(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specTexto);
+                p = new Controle(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specTexto);
+                break;
             default:
-                p = new Produto(id, nome, "Geral", marca, precoCusto, preco, estoque, estMin, dataCad); break;
+                p = new Produto(id, nome, "Geral", marca, precoCusto, preco, estoque, estMin, dataCad);
+                break;
         }
-        // Seta as métricas que não estão no construtor
+
+        // --- CORREÇÃO DO PARETO ---
+        // Agora que o objeto 'p' foi criado (seja Mouse ou Monitor),
+        // injetamos os dados de venda nele antes de retornar.
         if (p != null) {
             p.setQtdVendida(qtdVendida);
             p.setValorTotalVendido(totalVendido);
         }
+
         return p;
     }
 }

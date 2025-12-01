@@ -10,14 +10,16 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
+import javafx.scene.text.Text;
 import java.time.LocalDate;
 import java.util.List;
-
-import javafx.scene.chart.BarChart;
-import javafx.scene.chart.XYChart;
 
 public class MainController {
 
@@ -76,9 +78,9 @@ public class MainController {
     @FXML
     public void initialize() {
         // Inicializa as datas com o dia de hoje
-        dpDataCadastro.setValue(LocalDate.now());
-        dpDataOperacao.setValue(LocalDate.now());
-        dpDataFinanceiro.setValue(LocalDate.now());
+        if (dpDataCadastro != null) dpDataCadastro.setValue(LocalDate.now());
+        if (dpDataOperacao != null) dpDataOperacao.setValue(LocalDate.now());
+        if (dpDataFinanceiro != null) dpDataFinanceiro.setValue(LocalDate.now());
 
         // 1. Configuração Básica das Colunas de Produto
         colNome.setCellValueFactory(new PropertyValueFactory<>("nome"));
@@ -112,42 +114,25 @@ public class MainController {
         });
 
         // CONFIGURAÇÃO DA PESQUISA (FILTRO)
-
-        // Carrega dados do banco para a memória (masterData)
         masterData.addAll(produtoDAO.listarTodos());
-
-        // Cria a lista filtrada envolvendo a masterData
         FilteredList<Produto> filteredData = new FilteredList<>(masterData, p -> true);
 
-        // Adiciona o "ouvinte" no campo de texto
         if (txtPesquisa != null) {
             txtPesquisa.textProperty().addListener((observable, oldValue, newValue) -> {
                 filteredData.setPredicate(produto -> {
-                    // Se o filtro estiver vazio, mostra tudo
-                    if (newValue == null || newValue.isEmpty()) {
-                        return true;
-                    }
-
+                    if (newValue == null || newValue.isEmpty()) return true;
                     String lowerCaseFilter = newValue.toLowerCase();
-
-                    // Regras do filtro (Nome, Marca, Categoria)
                     if (produto.getNome().toLowerCase().contains(lowerCaseFilter)) return true;
                     if (produto.getMarca().toLowerCase().contains(lowerCaseFilter)) return true;
                     if (produto.getCategoria().toLowerCase().contains(lowerCaseFilter)) return true;
-
-                    return false; // Não achou
+                    return false;
                 });
             });
         }
 
-        // Cria a lista ordenada (para permitir clicar no cabeçalho da tabela)
         SortedList<Produto> sortedData = new SortedList<>(filteredData);
         sortedData.comparatorProperty().bind(tabelaProdutos.comparatorProperty());
-
-        // Joga a lista final na tabela
         tabelaProdutos.setItems(sortedData);
-
-        // ---------------------------------------------
 
         // Configuração do ComboBox
         cbTipo.setItems(FXCollections.observableArrayList(
@@ -158,64 +143,40 @@ public class MainController {
         cbTipo.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> atualizarCamposEspecificos(newVal));
         cbTipo.getSelectionModel().select("Outros");
 
-        // --- LÓGICA DE CÁLCULO AUTOMÁTICO DE PREÇO ---
-        // Quando digitar no custo ou margem, calcula a venda sozinho
+        // Lógica de Preço Automático
         if (txtPrecoCusto != null && txtMargem != null) {
             txtPrecoCusto.setOnKeyReleased(e -> calcularPrecoVenda());
             txtMargem.setOnKeyReleased(e -> calcularPrecoVenda());
         }
 
-        // --- FINANCEIRO ---
+        // FINANCEIRO
         cbTipoTransacao.setItems(FXCollections.observableArrayList("RECEITA", "DESPESA"));
-
-        colFinDesc.setCellValueFactory(new PropertyValueFactory<>("descricao"));
-        colFinValor.setCellValueFactory(new PropertyValueFactory<>("valor"));
-
-        // Formatação condicional (Verde/Vermelho)
-        colFinValor.setCellFactory(tc -> new TableCell<>() {
-            @Override protected void updateItem(Double item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null); setStyle("");
-                } else {
-                    setText(String.format("R$ %.2f", item));
-                    Transacao t = getTableView().getItems().get(getIndex());
-                    if (t instanceof app.model.Despesa) setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
-                    else setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
-                }
-            }
-        });
-
-        colFinTipo.setCellValueFactory(cellData -> {
-            String tipo = (cellData.getValue() instanceof app.model.Receita) ? "ENTRADA" : "SAÍDA";
-            return new SimpleStringProperty(tipo);
-        });
-
         configurarFinanceiro();
         atualizarDashboard();
-
         atualizarGraficoAnalise();
         atualizarGraficoPareto();
 
-        // Carrega a meta inicial no campo
         double metaAtual = financeiroService.getMeta();
         if (txtMetaInput != null) {
             txtMetaInput.setText(String.valueOf(metaAtual));
         }
     }
 
+    // =================================================================================
+    // GRÁFICOS COM RÓTULOS (VALORES EM CIMA DAS BARRAS)
+    // =================================================================================
+
     private void atualizarGraficoPareto() {
         graficoPareto.getData().clear();
+        graficoPareto.setAnimated(false); // Desliga animação para os rótulos não "dançarem"
 
-        // Atualiza o título do eixo Y e do Gráfico para refletir que agora é Dinheiro
         graficoPareto.getYAxis().setLabel("Valor Total Vendido (R$)");
         graficoPareto.setTitle("Ranking de Faturamento por Produto");
+        graficoPareto.setStyle("CHART_COLOR_1: #3498db;");
 
         ProdutoDAO dao = new ProdutoDAO();
         List<Produto> produtos = dao.listarTodos();
 
-        // 1. ORDENAÇÃO: Agora baseada no (Preço * Quantidade)
-        // Usamos Double.compare para ordenar do maior valor financeiro para o menor
         produtos.sort((p1, p2) -> Double.compare(
                 p2.getQtdVendida() * p2.getPreco(),
                 p1.getQtdVendida() * p1.getPreco()
@@ -225,10 +186,7 @@ public class MainController {
         series.setName("Receita Gerada");
 
         for (Produto p : produtos) {
-            // Calcula o total em Reais
             double totalReais = p.getQtdVendida() * p.getPreco();
-
-            // Só mostra se rendeu algum centavo
             if (totalReais > 0) {
                 series.getData().add(new XYChart.Data<>(p.getNome(), totalReais));
             }
@@ -236,37 +194,108 @@ public class MainController {
 
         graficoPareto.getData().add(series);
 
-        // --- PINTURA DAS BARRAS (AZUL UNIFORME) ---
-        for (XYChart.Data<String, Number> data : series.getData()) {
-            data.getNode().setStyle("-fx-bar-fill: #3498db;");
-
-            // Tooltip formatado em Reais (Ex: R$ 1500.00)
-            String valorFormatado = String.format("R$ %.2f", data.getYValue());
-            Tooltip t = new Tooltip("Total: " + valorFormatado);
-            Tooltip.install(data.getNode(), t);
-        }
+        // Adiciona os números em cima das barras (Formatado como Dinheiro)
+        adicionarRotulos(series, true);
     }
 
     private void atualizarGraficoAnalise() {
-        graficoEstoque.getData().clear(); // Limpa dados antigos
+        graficoEstoque.getData().clear();
+        graficoEstoque.setAnimated(false);
 
-        // Série 1: Estoque Atual (Barra Azul, geralmente)
         XYChart.Series<String, Number> serieAtual = new XYChart.Series<>();
         serieAtual.setName("Estoque Atual");
 
-        // Série 2: Estoque Mínimo (Barra Laranja, geralmente)
         XYChart.Series<String, Number> serieMinimo = new XYChart.Series<>();
         serieMinimo.setName("Mínimo Necessário");
 
-        // Pega os dados da lista que já existe na tabela
         for (Produto p : masterData) {
             serieAtual.getData().add(new XYChart.Data<>(p.getNome(), p.getEstoque()));
             serieMinimo.getData().add(new XYChart.Data<>(p.getNome(), p.getEstoqueMinimo()));
         }
 
-        // Adiciona as duas séries ao gráfico
         graficoEstoque.getData().addAll(serieAtual, serieMinimo);
+
+        // Adiciona os números em cima das barras (Formatado como Inteiro Simples)
+        adicionarRotulos(serieAtual, false);
+        adicionarRotulos(serieMinimo, false);
     }
+
+    /**
+     * Método Mágico: Coloca o texto com o valor em cima de cada barra do gráfico.
+     */
+    private void adicionarRotulos(XYChart.Series<String, Number> series, boolean isDinheiro) {
+        for (XYChart.Data<String, Number> data : series.getData()) {
+            data.nodeProperty().addListener((obs, oldNode, newNode) -> {
+                if (newNode != null) {
+                    mostrarValorNaBarra(data, isDinheiro);
+                }
+            });
+            // Caso o nó já exista (se não for animado)
+            if (data.getNode() != null) {
+                mostrarValorNaBarra(data, isDinheiro);
+            }
+        }
+    }
+
+    private void mostrarValorNaBarra(XYChart.Data<String, Number> data, boolean isDinheiro) {
+        Node node = data.getNode();
+        if (node.getParent() == null) return;
+
+        String textoValor;
+        if (isDinheiro) {
+            textoValor = String.format("R$ %.0f", data.getYValue().doubleValue());
+        } else {
+            textoValor = String.valueOf(data.getYValue().intValue());
+        }
+
+        Label label = new Label(textoValor);
+        label.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: black;");
+
+        // Adiciona o label dentro do mesmo grupo da barra, mas tenta posicionar em cima
+        // Nota: O posicionamento exato em JavaFX Charts é complexo sem libs externas,
+        // mas colocar o texto no Tooltip e um Label simples ajuda.
+
+        Tooltip t = new Tooltip(data.getXValue() + "\nValor: " + textoValor);
+        Tooltip.install(node, t);
+
+        // Exibe o valor dentro da barra (no topo)
+        if (node instanceof javafx.scene.layout.Region) {
+            // StackPane é usado internamente pelo BarChart, podemos adicionar o Label nele se convertermos
+            // Mas a forma mais segura sem quebrar o layout padrão é usar o Tooltip (acima)
+            // ou tentar adicionar um nó de texto se o parent permitir.
+            // Para simplificar e não causar erro de layout, vamos usar um truque:
+            // Adicionar o texto como "display" no topo do nó é difícil sem acesso ao layout absolute do gráfico.
+
+            // ALTERNATIVA SIMPLES QUE FUNCIONA:
+            // Colocamos o valor DENTRO da própria barra (node).
+        }
+
+        // -----------------------------------------------------------------------
+        // TRUQUE DO LABEL NO TOPO DA BARRA:
+        // O JavaFX BarChart não suporta nativamente labels "flutuando" acima.
+        // A melhor abordagem nativa é usar displayLabelForData se estendesse a classe.
+        // Como estamos num Controller, vamos usar um truque visual:
+        // Vamos adicionar um Text SOBRE a barra.
+        // -----------------------------------------------------------------------
+
+        // Nota: Devido à complexidade de coordenadas X/Y relativas no JavaFX,
+        // a implementação mais estável para "iniciantes" é usar Tooltip (já adicionado acima).
+        // Se quiser ver o número SEM passar o mouse, a melhor opção é:
+        // Habilitar a legenda do eixo Y ou usar uma biblioteca como TilesFX.
+
+        // ENTRETANTO, vou tentar uma abordagem que adiciona um Text no centro do Node:
+        if (data.getNode() instanceof javafx.scene.layout.StackPane) {
+            javafx.scene.layout.StackPane bar = (javafx.scene.layout.StackPane) data.getNode();
+            Text text = new Text(textoValor);
+            text.setStyle("-fx-fill: white; -fx-font-weight: bold; -fx-effect: dropshadow(one-pass-box, black, 2, 0.0, 0, 1);");
+
+            // Coloca o texto no topo da barra (dentro dela)
+            bar.getChildren().add(text);
+            javafx.scene.layout.StackPane.setAlignment(text, Pos.TOP_CENTER);
+        }
+    }
+
+    // =================================================================================
 
     // funcao auxiliar para calcular o preço
     private void calcularPrecoVenda() {
@@ -277,19 +306,13 @@ public class MainController {
             if (!custoStr.isEmpty() && !margemStr.isEmpty()) {
                 double custo = Double.parseDouble(custoStr);
                 double margem = Double.parseDouble(margemStr);
-
-                // Fórmula: Custo + (Lucro)
                 double vendaSugerida = custo + (custo * (margem / 100));
-
                 txtPrecoVenda.setText(String.format("%.2f", vendaSugerida).replace(",", "."));
             }
-        } catch (NumberFormatException ex) {
-            // Ignora letras
-        }
+        } catch (NumberFormatException ex) {}
     }
 
     private void configurarFinanceiro() {
-        cbTipoTransacao.setItems(FXCollections.observableArrayList("RECEITA", "DESPESA"));
         colFinData.setCellValueFactory(new PropertyValueFactory<>("data"));
         colFinDesc.setCellValueFactory(new PropertyValueFactory<>("descricao"));
         colFinValor.setCellValueFactory(new PropertyValueFactory<>("valor"));
@@ -313,7 +336,6 @@ public class MainController {
         });
     }
 
-    // --- MÉTODOS VISUAIS AUXILIARES ---
     private void atualizarCamposEspecificos(String tipo) {
         esconderTodosCampos();
         if (tipo == null) return;
@@ -341,7 +363,6 @@ public class MainController {
         campo.setVisible(true); campo.setManaged(true); campo.setPromptText(dica); campo.clear();
     }
 
-    // --- AÇÕES DE PRODUTO ---
     @FXML
     public void handleSalvarProduto() {
         try {
@@ -352,7 +373,7 @@ public class MainController {
             double custo = Double.parseDouble(txtPrecoCusto.getText().replace(",", "."));
             double venda = Double.parseDouble(txtPrecoVenda.getText().replace(",", "."));
             int estMin = Integer.parseInt(txtEstoqueMin.getText());
-            String dataCad = dpDataCadastro.getValue().toString(); // Formato YYYY-MM-DD
+            String dataCad = dpDataCadastro.getValue().toString();
 
             Produto p;
             switch (tipo) {
@@ -370,9 +391,7 @@ public class MainController {
             }
             produtoDAO.salvar(p);
 
-            //Gera a Despesa Financeira Automática
             double custoTotalInvestimento = custo * qtd;
-
             if (custoTotalInvestimento > 0) {
                 financeiroService.registrarDespesa("Compra Inicial: " + nome + " (" + qtd + "x)", custoTotalInvestimento, dataCad);
             }
@@ -380,7 +399,6 @@ public class MainController {
             carregarTabela();
             atualizarFinanceiro();
             atualizarDashboard();
-
             limparCampos();
             mostrarSucesso("Sucesso", "Produto cadastrado e despesa de R$" + custoTotalInvestimento + " registrada!");
 
@@ -393,85 +411,49 @@ public class MainController {
     @FXML
     public void handleReporEstoque() {
         Produto selecionado = tabelaProdutos.getSelectionModel().getSelectedItem();
-
-        if (selecionado == null) {
-            mostrarErro("Seleção", "Selecione um produto na tabela para repor.");
-            return;
-        }
+        if (selecionado == null) { mostrarErro("Seleção", "Selecione um produto na tabela para repor."); return; }
 
         try {
             int qtd = Integer.parseInt(txtQtd.getText());
-
-            if (qtd <= 0) {
-                mostrarErro("Quantidade Inválida", "A quantidade deve ser maior que zero.");
-                return;
-            }
-
+            if (qtd <= 0) { mostrarErro("Quantidade Inválida", "A quantidade deve ser maior que zero."); return; }
             String dataOp = dpDataOperacao.getValue().toString();
 
-            // 1. Atualiza o Estoque no Banco
             selecionado.setEstoque(selecionado.getEstoque() + qtd);
             produtoDAO.atualizar(selecionado);
 
-            // Gera Despesa baseada no CUSTO REAL ---
             double custoTotal = selecionado.getPrecoCusto() * qtd;
-
             if (custoTotal > 0) {
                 financeiroService.registrarDespesa("Reposição: " + selecionado.getNome() + " (" + qtd + "x)", custoTotal, dataOp);
             }
 
-            //Atualiza as telas
-            tabelaProdutos.refresh(); // Atualiza número na tabela
-            atualizarDashboard();     // Atualiza alertas e balanço
-            atualizarFinanceiro();    // Atualiza o saldo e extrato
+            tabelaProdutos.refresh();
+            atualizarDashboard();
+            atualizarFinanceiro();
+            mostrarSucesso("Estoque Atualizado", "Adicionadas " + qtd + " unidades.\nDespesa de R$ " + String.format("%.2f", custoTotal));
 
-            mostrarSucesso("Estoque Atualizado",
-                    "Foram adicionadas " + qtd + " unidades.\n" +
-                            "Despesa de R$ " + String.format("%.2f", custoTotal) + " registrada no caixa.");
-
-        } catch (NumberFormatException e) {
-            mostrarErro("Erro", "Digite uma quantidade válida no campo 'Qtd'.");
-        }
+        } catch (NumberFormatException e) { mostrarErro("Erro", "Digite uma quantidade válida no campo 'Qtd'."); }
     }
 
     @FXML
     public void handleBaixarEstoque() {
         Produto selecionado = tabelaProdutos.getSelectionModel().getSelectedItem();
-
-        if (selecionado == null) {
-            System.out.println("DEBUG: Nenhum produto selecionado.");
-            return;
-        }
+        if (selecionado == null) return;
 
         try {
-            // Pega o valor digitado
             int qtdDigitada = Integer.parseInt(txtQtd.getText());
-
-            // Pega o estoque real do objeto
             int estoqueAtual = selecionado.getEstoque();
 
-            // Imprime no console para vermos a verdade
-            System.out.println("--- DEBUG VENDA ---");
-            System.out.println("Produto: " + selecionado.getNome());
-            System.out.println("Estoque no Objeto: " + estoqueAtual);
-            System.out.println("Qtd Digitada: " + qtdDigitada);
-            System.out.println("Condição (Estoque < Qtd): " + (estoqueAtual < qtdDigitada));
-            System.out.println("-------------------");
-
             if (estoqueAtual < qtdDigitada) {
-                mostrarErro("Estoque Insuficiente",
-                        "Você quer vender " + qtdDigitada + ", mas o sistema consta apenas " + estoqueAtual + " no estoque.");
+                mostrarErro("Estoque Insuficiente", "Você quer vender " + qtdDigitada + ", mas só tem " + estoqueAtual + ".");
                 return;
             }
 
             String dataOp = dpDataOperacao.getValue().toString();
-
             selecionado.setEstoque(estoqueAtual - qtdDigitada);
             selecionado.setQtdVendida(selecionado.getQtdVendida() + qtdDigitada);
             selecionado.setValorTotalVendido(selecionado.getValorTotalVendido() + (selecionado.getPreco() * qtdDigitada));
             produtoDAO.atualizar(selecionado);
 
-            // Receita baseada no PREÇO DE VENDA
             double valorVenda = selecionado.getPreco() * qtdDigitada;
             financeiroService.registrarReceita("Venda: " + selecionado.getNome(), valorVenda, dataOp);
 
@@ -480,9 +462,7 @@ public class MainController {
             atualizarFinanceiro();
             mostrarSucesso("Venda", "Venda registrada! Receita: R$ " + valorVenda);
 
-        } catch (NumberFormatException e) {
-            mostrarErro("Erro", "Digite uma quantidade válida (número inteiro).");
-        }
+        } catch (NumberFormatException e) { mostrarErro("Erro", "Digite uma quantidade válida."); }
     }
 
     @FXML
@@ -495,19 +475,14 @@ public class MainController {
         }
     }
 
-    // --- AÇÕES FINANCEIRAS ---
     @FXML
     public void handleSalvarMeta() {
         try {
             double novaMeta = Double.parseDouble(txtMetaInput.getText().replace(",", "."));
             financeiroService.salvarMeta(novaMeta);
-
             atualizarFinanceiro();
             mostrarSucesso("Meta Definida", "Nova meta de R$ " + novaMeta + " configurada!");
-
-        } catch (NumberFormatException e) {
-            mostrarErro("Valor Inválido", "Digite um número válido para a meta.");
-        }
+        } catch (NumberFormatException e) { mostrarErro("Valor Inválido", "Digite um número válido para a meta."); }
     }
 
     @FXML
@@ -518,20 +493,14 @@ public class MainController {
             double valor = Double.parseDouble(txtValorTransacao.getText().replace(",", "."));
             String data = dpDataFinanceiro.getValue().toString();
 
-            if (tipo == null || desc.isEmpty()) {
-                mostrarErro("Erro", "Preencha tipo e descrição.");
-                return;
-            }
+            if (tipo == null || desc.isEmpty()) { mostrarErro("Erro", "Preencha tipo e descrição."); return; }
             if (tipo.equals("RECEITA")) financeiroService.registrarReceita(desc, valor, data);
             else financeiroService.registrarDespesa(desc, valor, data);
 
-            txtDescTransacao.clear();
-            txtValorTransacao.clear();
+            txtDescTransacao.clear(); txtValorTransacao.clear();
             atualizarFinanceiro();
         } catch (Exception e) { mostrarErro("Erro", "Valor inválido."); }
     }
-
-    // --- UTILS & ATUALIZAÇÕES ---
 
     private void carregarTabela() {
         masterData.clear();
@@ -550,20 +519,16 @@ public class MainController {
     @FXML
     public void atualizarFinanceiro() {
         tabelaFinanceira.setItems(FXCollections.observableArrayList(financeiroService.getHistorico()));
-
         lblTotalEntradas.setText(String.format("R$ %.2f", financeiroService.calcularTotalEntradas()));
         lblTotalSaidas.setText(String.format("R$ %.2f", financeiroService.calcularTotalSaidas()));
-
         double saldo = financeiroService.calcularSaldo();
         lblSaldoFinanceiro.setText(String.format("R$ %.2f", saldo));
         if (saldo >= 0) lblSaldoFinanceiro.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: green;");
         else lblSaldoFinanceiro.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: red;");
 
-        // Atualiza Barra de Progresso da Meta
         double meta = financeiroService.getMeta();
         double falta = financeiroService.calcularFaltaParaMeta();
         double progresso = financeiroService.calcularProgressoMeta();
-
         if (falta > 0) {
             lblFaltaMeta.setText(String.format("R$ %.2f", falta));
             lblFaltaMeta.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e67e22;");
@@ -571,12 +536,9 @@ public class MainController {
             lblFaltaMeta.setText("META BATIDA! 🎉");
             lblFaltaMeta.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #27ae60;");
         }
-
         barraMeta.setProgress(progresso);
         lblPorcentagemMeta.setText(String.format("%.1f%% Concluído (Meta: R$ %.2f)", progresso * 100, meta));
-
-        if (progresso >= 1.0) barraMeta.setStyle("-fx-accent: #f1c40f;");
-        else barraMeta.setStyle("-fx-accent: #27ae60;");
+        if (progresso >= 1.0) barraMeta.setStyle("-fx-accent: #f1c40f;"); else barraMeta.setStyle("-fx-accent: #27ae60;");
     }
 
     private void limparCampos() {
@@ -586,14 +548,10 @@ public class MainController {
     }
 
     private void mostrarErro(String titulo, String msg) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(titulo); alert.setHeaderText(null); alert.setContentText(msg);
-        alert.showAndWait();
+        Alert alert = new Alert(Alert.AlertType.ERROR); alert.setTitle(titulo); alert.setHeaderText(null); alert.setContentText(msg); alert.showAndWait();
     }
 
     private void mostrarSucesso(String titulo, String msg) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(titulo); alert.setHeaderText(null); alert.setContentText(msg);
-        alert.showAndWait();
+        Alert alert = new Alert(Alert.AlertType.INFORMATION); alert.setTitle(titulo); alert.setHeaderText(null); alert.setContentText(msg); alert.showAndWait();
     }
 }

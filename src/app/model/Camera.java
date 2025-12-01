@@ -5,7 +5,6 @@ public class Camera extends Produto {
     public Camera(int id, String nome, String marca, double precoCusto, double preco, int estoque, int estoqueMinimo, String dataCadastro, String resolucao) {
         super(id, nome, "Camera", marca, precoCusto, preco, estoque, estoqueMinimo, dataCadastro);
         this.resolucao = resolucao;
-        setEstoqueMinimo(50);
     }
     public String getResolucao() { return resolucao; }
 }
