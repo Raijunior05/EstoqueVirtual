@@ -201,7 +201,7 @@ public class ProdutoDAO implements ICrud<Produto> {
             case "Controle":
                 return new Controle(id, nome, marca, precoCusto, preco, estoque, estMin, dataCad, specTexto);
             default:
-             p = new Produto(id, nome, "Geral", marca, precoCusto, preco, estoque, estMin, dataCad); break;
+                p = new Produto(id, nome, "Geral", marca, precoCusto, preco, estoque, estMin, dataCad); break;
         }
         // Seta as métricas que não estão no construtor
         if (p != null) {

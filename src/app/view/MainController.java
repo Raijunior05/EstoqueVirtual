@@ -14,6 +14,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import java.time.LocalDate;
+import java.util.List;
 
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
@@ -65,6 +66,8 @@ public class MainController {
     @FXML private TextField txtMetaInput;
     @FXML private Label lblFaltaMeta, lblPorcentagemMeta;
     @FXML private ProgressBar barraMeta;
+
+    @FXML private BarChart<String, Number> graficoPareto;
 
     private ProdutoDAO produtoDAO = new ProdutoDAO();
     private MonitorService monitorService = new MonitorService();
@@ -192,11 +195,55 @@ public class MainController {
         atualizarDashboard();
 
         atualizarGraficoAnalise();
+        atualizarGraficoPareto();
 
         // Carrega a meta inicial no campo
         double metaAtual = financeiroService.getMeta();
         if (txtMetaInput != null) {
             txtMetaInput.setText(String.valueOf(metaAtual));
+        }
+    }
+
+    private void atualizarGraficoPareto() {
+        graficoPareto.getData().clear();
+
+        // Atualiza o título do eixo Y e do Gráfico para refletir que agora é Dinheiro
+        graficoPareto.getYAxis().setLabel("Valor Total Vendido (R$)");
+        graficoPareto.setTitle("Ranking de Faturamento por Produto");
+
+        ProdutoDAO dao = new ProdutoDAO();
+        List<Produto> produtos = dao.listarTodos();
+
+        // 1. ORDENAÇÃO: Agora baseada no (Preço * Quantidade)
+        // Usamos Double.compare para ordenar do maior valor financeiro para o menor
+        produtos.sort((p1, p2) -> Double.compare(
+                p2.getQtdVendida() * p2.getPreco(),
+                p1.getQtdVendida() * p1.getPreco()
+        ));
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Receita Gerada");
+
+        for (Produto p : produtos) {
+            // Calcula o total em Reais
+            double totalReais = p.getQtdVendida() * p.getPreco();
+
+            // Só mostra se rendeu algum centavo
+            if (totalReais > 0) {
+                series.getData().add(new XYChart.Data<>(p.getNome(), totalReais));
+            }
+        }
+
+        graficoPareto.getData().add(series);
+
+        // --- PINTURA DAS BARRAS (AZUL UNIFORME) ---
+        for (XYChart.Data<String, Number> data : series.getData()) {
+            data.getNode().setStyle("-fx-bar-fill: #3498db;");
+
+            // Tooltip formatado em Reais (Ex: R$ 1500.00)
+            String valorFormatado = String.format("R$ %.2f", data.getYValue());
+            Tooltip t = new Tooltip("Total: " + valorFormatado);
+            Tooltip.install(data.getNode(), t);
         }
     }
 
@@ -497,6 +544,7 @@ public class MainController {
         double total = tabelaProdutos.getItems().stream().mapToDouble(p -> p.getPrecoCusto() * p.getEstoque()).sum();
         lblBalanco.setText(String.format("R$ %.2f", total));
         atualizarGraficoAnalise();
+        atualizarGraficoPareto();
     }
 
     @FXML
