@@ -20,6 +20,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.text.Text;
 import java.time.LocalDate;
 import java.util.List;
+import javafx.scene.chart.CategoryAxis;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 
 public class MainController {
 
@@ -167,34 +172,50 @@ public class MainController {
     // =================================================================================
 
     private void atualizarGraficoPareto() {
+        graficoPareto.setAnimated(false);
+        graficoPareto.setTitle("Ranking de Faturamento (Pareto)");
         graficoPareto.getData().clear();
-        graficoPareto.setAnimated(false); // Desliga animação para os rótulos não "dançarem"
-
-        graficoPareto.getYAxis().setLabel("Valor Total Vendido (R$)");
-        graficoPareto.setTitle("Ranking de Faturamento por Produto");
-        graficoPareto.setStyle("CHART_COLOR_1: #3498db;");
 
         ProdutoDAO dao = new ProdutoDAO();
         List<Produto> produtos = dao.listarTodos();
 
-        produtos.sort((p1, p2) -> Double.compare(
-                p2.getQtdVendida() * p2.getPreco(),
-                p1.getQtdVendida() * p1.getPreco()
-        ));
-
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Receita Gerada");
-
+        // 1. AGRUPA E SOMA VALORES POR NOME (Evita Duplicatas)
+        Map<String, Double> vendasPorNome = new HashMap<>();
         for (Produto p : produtos) {
-            double totalReais = p.getQtdVendida() * p.getPreco();
-            if (totalReais > 0) {
-                series.getData().add(new XYChart.Data<>(p.getNome(), totalReais));
+            // Se o nome for igual, soma o valor vendido
+            vendasPorNome.merge(p.getNome(), p.getValorTotalVendido(), Double::sum);
+        }
+
+        // 2. CONVERTE PARA LISTA PARA ORDENAR
+        // Criamos uma lista de pares (Nome, ValorTotal)
+        List<Map.Entry<String, Double>> listaOrdenada = new ArrayList<>(vendasPorNome.entrySet());
+
+        // Ordena do Maior para o Menor Valor
+        listaOrdenada.sort((e1, e2) -> Double.compare(e2.getValue(), e1.getValue()));
+
+        // 3. EXTRAI OS NOMES ÚNICOS NA ORDEM CORRETA
+        List<String> categoriasEixo = new ArrayList<>();
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Receita Total");
+
+        for (Map.Entry<String, Double> entry : listaOrdenada) {
+            double total = entry.getValue();
+            if (total > 0) {
+                String nomeProduto = entry.getKey();
+                categoriasEixo.add(nomeProduto); // Lista de nomes únicos para o eixo
+                series.getData().add(new XYChart.Data<>(nomeProduto, total));
             }
         }
 
-        graficoPareto.getData().add(series);
+        // 4. FORÇA O EIXO X (SEM DUPLICATAS)
+        if (graficoPareto.getXAxis() instanceof CategoryAxis) {
+            CategoryAxis xAxis = (CategoryAxis) graficoPareto.getXAxis();
+            xAxis.getCategories().clear();
+            // Agora 'categoriasEixo' tem apenas nomes únicos, resolvendo o crash
+            xAxis.setCategories(FXCollections.observableArrayList(categoriasEixo));
+        }
 
-        // Adiciona os números em cima das barras (Formatado como Dinheiro)
+        graficoPareto.getData().add(series);
         adicionarRotulos(series, true);
     }
 
